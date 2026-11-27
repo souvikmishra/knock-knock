@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -22,10 +25,16 @@ describe("javaMajor", () => {
 describe("CLI", () => {
   it("exits 1 with both message lines when java is missing", () => {
     const script = fileURLToPath(new URL("./require-java.mjs", import.meta.url));
-    const result = spawnSync(process.execPath, [script], {
-      encoding: "utf8",
-      env: { PATH: "/usr/bin:/bin" },
-    });
+    const emptyDir = mkdtempSync(join(tmpdir(), "no-java-"));
+    let result;
+    try {
+      result = spawnSync(process.execPath, [script], {
+        encoding: "utf8",
+        env: { PATH: emptyDir },
+      });
+    } finally {
+      rmSync(emptyDir, { recursive: true, force: true });
+    }
     expect(result.status).toBe(1);
     expect(result.stderr).toContain(
       "Java 21+ is required for the Firebase emulators: brew install openjdk@21",
