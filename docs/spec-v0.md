@@ -35,7 +35,8 @@ explicit answer. There are no read receipts, no last seen and no typing indicato
 
 | Word | Meaning |
 |------|---------|
-| **Neighbour** | Someone you've connected with through an invite link. Only neighbours can knock on each other |
+| **Neighbour** | Someone you've connected with through an invite link **and the link's owner accepted**. Only neighbours can knock on each other |
+| **Neighbour request** | What opening someone's invite link sends to its owner: "Riya wants to be neighbours" with **[Accept]** and **[No thanks]**. It expires after 7 days |
 | **Door** | Your availability: **open** or **closed** (for 1 hour / until tomorrow) |
 | **Knock** | A short-lived ask to talk. It has a **way in**, a **window** and an optional **tag** |
 | **Way in** | How you want to talk if they open: 📞 call, FaceTime audio, FaceTime video, WhatsApp, Signal, 🤝 meet |
@@ -99,6 +100,15 @@ When either app is on screen, it also updates live (`onSnapshot`), so nobody wai
 
 ### 3.3 Rules
 - Only **neighbours** can knock on each other ([0005](decisions/0005-who-can-knock.md)).
+- **Opening an invite link never makes you neighbours.** It creates a **neighbour request** to the link's owner.
+  Only after the owner accepts can either side knock.
+  - A pending request **expires after 7 days**. No pile, no badge count, no history after it ends.
+  - **No thanks is silent**: the requester only sees "waiting" until it expires.
+  - One pending request per pair; asking again while one is pending changes nothing *(builder's call)*.
+  - **Invite codes** *(builder's call)*: link codes are random with at least 128 bits of entropy (for example 22
+    base62 characters) and are never human-typed. The type-in fallback is a **separate 6-character code**, single-use,
+    expiring after 10 minutes. `requestNeighbour` is rate-limited per caller (for example 10 attempts per hour) and
+    answers a bad, used or expired code only with "link not valid".
 - You can't knock on a **closed door**. Nothing queues ([0006](decisions/0006-door-status.md)).
 - **One live knock per pair**, in either direction *(builder's call: direction doesn't matter)*.
 - **10-minute cooldown** before knocking the same person again after their `not_now`, or after your knock to them
@@ -139,6 +149,10 @@ iPhone web apps: no buttons, no vibration patterns, no custom sounds, and **ever
 | Opened | knocker | "🚪 Riya opened · 📞 call now" | default, high urgency |
 | Not now | knocker | "Riya: not now" (+ " · maybe later today" only if she chose it) | silent |
 | Not in | knocker | none (shown in app) | — |
+| Neighbour request | link owner | "Riya wants to be neighbours" (tag `request-<id>`) *(builder's call)* | default |
+
+- A request push is one notification with no count. It isn't repeated, and nothing is sent when a request expires
+  or is declined.
 
 - Tapping any notification opens the app on the matching screen.
 - When the recipient opens or declines **in the app**, the app closes the knock notification locally
@@ -160,20 +174,26 @@ Mobile-first (iPhone), one column. Wireframes show layout, not visual design.
 ├─────────────────────────────────────┤
 │ Arjun knocked · 4:10pm  [Knock back]│  ← faint, only today, one per person
 ├─────────────────────────────────────┤
+│ Riya wants to be neighbours         │  ← one small row per request, gone after 7 days
+│             [ Accept ] [ No thanks ]│
+├─────────────────────────────────────┤
 │ Neighbours                          │
 │                                     │
 │  Riya          🟢        [ Knock ]  │
 │  Kabir         🚪 closed till 7pm   │
 │  Meera         🟢        [ Knock ]  │
 │  Dev           knocking… 12:40      │  ← your live knock
+│  Tara          waiting for Tara…    │  ← your pending request (no Knock button)
 │                                     │
-│ [ + Invite a neighbour ]            │  → share sheet with your link
+│ [ + Invite a neighbour ]            │  → share sheet with your link; they become neighbours only once you accept
 └─────────────────────────────────────┘
 ```
 - 🟢 means only "door open". It is **not** an online indicator.
+- Neighbour requests are plain rows, with no badge or counter on the app icon or in the header. A declined or
+  expired request just disappears. The requester's pending row says only "waiting" and gives no hint of a decline.
 - During a cooldown, the Knock button reads "Knock in 7 min" and is disabled.
 - ⚙ Settings (not a core screen): name, phone number / FaceTime handle, which ways in I accept, my invite link
-  (copy/reset), remove a neighbour, notification help.
+  (copy/reset, and "Get a one-time code" for the 6-character type-in fallback), remove a neighbour, notification help.
 
 ### Screen 2: Knock (knocker's sheet → recipient's incoming knock)
 Knocker, after tapping **Knock** on Riya:
@@ -246,15 +266,15 @@ Other outcomes for the knocker (replacing the "Knocking…" card):
 Safari tabs and Home Screen apps don't share storage on iPhone, so the account is created **inside** the Home
 Screen app, and the invite crosses over in a cookie (copied once when you add to Home Screen, iOS 17.2+).
 ```
- Message from Arjun: "knock on my door → <app domain>/k/7f3q"
+ Message from Arjun: "knock on my door → <app domain>/k/<22-char-random-code>"
     ↓ tap (opens in Safari)
- Safari: "Arjun wants to be neighbours on Knock Knock."
+ Safari: "Arjun invited you to Knock Knock."
          Store invite code in a cookie.
          "First, add Knock Knock to your Home Screen:"
          [picture: Share ⬆ → Add to Home Screen → Add]
     ↓ user adds it, opens the 🚪 icon
  Home Screen app: reads the invite cookie
-         "Arjun wants to be neighbours."      [ Accept ]  [ No thanks ]
+         "Arjun invited you to be neighbours."
     ↓
  "What should neighbours call you?"   [ Riya        ]  [ Next ]
     ↓
@@ -262,11 +282,19 @@ Screen app, and the invite crosses over in a cookie (copied once when you add to
     ↓
  Optional: "Add your number for calls, FaceTime, WhatsApp and Signal"  [ Add ] [ Later ]
     ↓
- Doors screen, Arjun already a neighbour
+ Account created → app calls requestNeighbour(code) → request sent to Arjun
+    ↓
+ Doors screen: "Waiting for Arjun to accept"  (Arjun is a pending row, not yet a neighbour)
+
+ Arjun's phone: "Riya wants to be neighbours"  [ Accept ]  [ No thanks ]
+    ↓ Accept: both are neighbours, Riya's list shows Arjun with [ Knock ]
+      No thanks: nothing is sent; Riya keeps seeing "waiting" until the request expires (7 days)
 ```
-- If the cookie didn't carry over: "Tap Arjun's link again" or type the short code from it *(builder's call)*.
+- The request is sent only after the account exists, because the callable needs a signed-in caller.
+- If the cookie didn't carry over: "Tap Arjun's link again", or type a **6-character one-time code** that Arjun gets
+  from Settings (single-use, valid 10 minutes, never the link code) *(builder's call)*.
 - If the person already has the app, the link opens in Safari, which can't hand it to the app. Show
-  "Open Knock Knock from your Home Screen and tap ‘Have a code?’" with the code *(builder's call)*.
+  "Open Knock Knock from your Home Screen and tap ‘Have a code?’" and ask Arjun for a one-time code *(builder's call)*.
 - The app calls `navigator.storage.persist()` on every start until granted.
 - Android/desktop (works, not tested in v0): the same flow with the browser's install prompt.
 
@@ -290,8 +318,19 @@ users/{uid}/tokens/{token}           // one per device/browser
   updatedAt: Timestamp
 
 invites/{code}                       // one active personal link per user; reset = new code
-  owner: uid
+  owner: uid                         // code: random, >= 128 bits (e.g. 22 base62 chars), never typed
   createdAt: Timestamp
+
+inviteCodes/{shortCode}              // type-in fallback only; 6 chars, single-use
+  owner: uid
+  createdAt, expiresAt: Timestamp    // expiresAt = createdAt + 10 min
+  usedAt: Timestamp | null
+
+neighbourRequests/{id}               // one pending per pair
+  from: uid                          // the person who opened the link
+  to: uid                            // the link's owner
+  createdAt, expiresAt: Timestamp    // expiresAt = createdAt + 7 days
+  status: 'pending'|'accepted'|'declined'|'expired'
 
 neighbours/{pairId}                  // pairId = sorted(uidA, uidB).join('_')
   members: [uidA, uidB]
@@ -316,12 +355,20 @@ pushOutbox/{id}                      // emulator/test only: what would have been
 - **Contact privacy:** a phone number or FaceTime handle never sits in a document another user can read until
   `open()` copies the needed hand-off links into that knock. Only the two parties can read a knock.
 - **Security rules:** clients can read their own `users` doc and its subcollections, neighbours' public `users`
-  fields (name, door, doorUntil, ways), `neighbours` docs they're in, and `knocks` where they're `from` or `to`.
+  fields (name, door, doorUntil, ways), `neighbours` docs they're in, `neighbourRequests` where they're `from` or `to`, and `knocks` where they're
+  `from` or `to`. The `invites` and `inviteCodes` collections are not client-readable.
   **Clients write nothing directly** except their own push tokens. Everything else goes through callable functions.
-- **Callable functions:** `createAccount(name, timeZone)`, `acceptInvite(code)`, `resetInvite()`,
+- **Callable functions:** `createAccount(name, timeZone)`, `requestNeighbour(code)`, `answerNeighbourRequest(id, accept)`,
+  `createInviteCode()` (the 6-character fallback), `resetInvite()`,
   `removeNeighbour(uid)`, `knock(to, wayIn, windowMin, tag?)`, `cancelKnock(id)`, `open(id)`,
   `notNow(id, laterToday)`, `markHandoffTapped(id)`, `setDoor(state, until?)`, `updateProfile(name?, ways?, phone?, facetime?)`.
-- **Scheduled work:** the `expireKnock` task runs at `expiresAt`. Door auto-reopen is a task at `doorUntil`. When it runs it rechecks the user's current `doorUntil` and does nothing
+- **Neighbour requests** *(builder's call)*: `requestNeighbour(code)` looks up a link code or a short code and creates
+  a `pending` request to its owner. It is rate-limited per caller (for example 10 attempts per hour) and replies
+  "link not valid" for anything unknown, used or expired. Only the request's `to` can call
+  `answerNeighbourRequest`; accepting creates the `neighbours` doc in the same transaction. A decline sends nothing
+  to the requester. Expired requests are treated as gone even before cleanup runs.
+- **Scheduled work:** the `expireKnock` task runs at `expiresAt`. A `expireNeighbourRequest` task runs at each
+  request's `expiresAt`. Door auto-reopen is a task at `doorUntil`. When it runs it rechecks the user's current `doorUntil` and does nothing
   if it has changed or been cleared, so a closure that was extended or ended early is never broken by the earlier task.
 - **Delivery metric** *(builder's call)*: the knock push carries a single-use token. The service worker posts it to
   an HTTPS function on receipt (inside `event.waitUntil`), which sets `pushReceivedAt`.
@@ -341,6 +388,7 @@ pushOutbox/{id}                      // emulator/test only: what would have been
 - Custom domain ([0015](decisions/0015-setup-and-deploys.md))
 - Desktop menubar app, browser extension
 - Blocking/reporting beyond silently removing a neighbour
+- A request inbox, request counts or badges, and reminders about pending requests
 
 ## 7. Risks
 - **Add to Home Screen is real friction.** Every iPhone tester must do it before anything works. We measure how
@@ -348,7 +396,7 @@ pushOutbox/{id}                      // emulator/test only: what would have been
 - **Knocks look like ordinary notifications** on iPhone: no buttons, default sound. Focus modes may silence them.
   If knocks get missed for this reason, the exit criterion is a native app ([0007](decisions/0007-platform.md)).
 - **The invite cookie must cross from Safari to the Home Screen app.** Check this first on a real iPhone. A
-  short-code fallback is in the flow.
+  short-code fallback (single-use, 10 minutes) is in the flow.
 - **Replacing a notification by `tag`** (the fade) is unconfirmed on iPhone. Check it on a real device.
 - **Lost accounts** if someone deletes the Home Screen app ([0010](decisions/0010-identity.md)). Acceptable for a
   2-week test.
@@ -366,7 +414,8 @@ The founder + ~8 friends, all on iPhone, use it for **2 weeks**. v0 works if:
 | Onboarding (watched, no target) | invited friends who finish onboarding | accounts created vs invites sent |
 
 **Before the test starts**, each of these must pass on at least two real iPhones with the deployed app:
-1. Invite link in Safari → Add to Home Screen → the Home Screen app shows the invite and creates the account.
+1. Invite link in Safari → Add to Home Screen → the Home Screen app shows the invite, creates the account and
+   sends the request; the link owner accepts and both can knock.
 2. A knock arrives with the screen locked; tapping it opens the full-screen door. A knock sent while the app is
    visible also shows a notification, and a later locked-phone knock still arrives.
 3. Open → the knocker gets "Riya opened" with their phone locked.

@@ -32,10 +32,12 @@ What iPhone web apps can and can't do (Nov 2026):
   1. The invite link opens in Safari. The page shows who invited you and stores the invite code in a cookie.
   2. It shows a short how-to for Share → Add to Home Screen, with a picture.
   3. The person opens Knock Knock from the Home Screen. The app reads the copied cookie and shows
-     "Arjun wants to be neighbours → Accept".
+     "Arjun invited you to be neighbours". Finishing sign-up sends Arjun a neighbour request
+     ([0005](0005-who-can-knock.md)), and the new person ends on "Waiting for Arjun to accept".
   4. Name → **[Allow notifications]** button (needs a tap) → done.
   The account is created **inside the Home Screen app**, never in the Safari tab. If the cookie didn't carry over,
-  the fallback is "tap the invite link again" (if the app isn't installed yet) or a short code. For an already installed app, Safari can't hand the link over, so the person types the short code.
+  the fallback is "tap the invite link again" (if the app isn't installed yet) or a short code. For an already installed app, Safari can't hand the link over, so the person types the short code
+  (a separate single-use 6-character code that expires after 10 minutes, see [0005](0005-who-can-knock.md)).
 - The app calls `navigator.storage.persist()` on every start until it's granted, so iOS doesn't evict the
   account.
 - Pushes are sent with high urgency.
