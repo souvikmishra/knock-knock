@@ -116,7 +116,10 @@ When either app is on screen, it also updates live (`onSnapshot`), so nobody wai
 - **Knock back** is a normal knock and passes the same rules, except it skips the cooldown, since the cooldown
   protects the recipient and here the recipient is the one reaching back ([0005](decisions/0005-who-can-knock.md)).
   Each missed knock allows **one** cooldown-free Knock back; any further knock to that person follows the normal
-  10-minute cooldown.
+  10-minute cooldown. A Knock back is `knock(to, wayIn, windowMin, tag?, knockBackOf)`, where `knockBackOf` is the
+  id of the missed knock. In one transaction the server checks that this knock was sent to the caller by `to`, is in an
+  end state (`expired` or `not_now`), is from today, and has `knockBackUsed == false`. It then sets
+  `knockBackUsed = true` and skips the cooldown once. A knock without `knockBackOf` always follows the cooldown.
 - Closing your door doesn't cancel knocks already live.
 - Several missed knocks from one person collapse into one faint line, the latest *(builder's call)*. The line
   disappears at the recipient's local midnight ([0003](decisions/0003-unanswered-knocks.md)).
@@ -291,7 +294,7 @@ Screen app, and the invite crosses over in a cookie (copied once when you add to
       No thanks: nothing is sent; Riya keeps seeing "waiting" until the request expires (7 days)
 ```
 - The request is sent only after the account exists, because the callable needs a signed-in caller.
-- If the cookie didn't carry over: "Tap Arjun's link again", or type a **6-character one-time code** that Arjun gets
+- If the cookie didn't carry over: before the app is installed, "Tap Arjun's link again". For an installed app, type a **6-character one-time code** that Arjun gets
   from Settings (single-use, valid 10 minutes, never the link code) *(builder's call)*.
 - If the person already has the app, the link opens in Safari, which can't hand it to the app. Show
   "Open Knock Knock from your Home Screen and tap ‘Have a code?’" and ask Arjun for a one-time code *(builder's call)*.
@@ -353,6 +356,7 @@ knocks/{knockId}
   createdAt, expiresAt: Timestamp
   status: 'live'|'opened'|'not_now'|'expired'|'cancelled'
   laterToday: boolean                // with not_now
+  knockBackUsed: boolean             // false at creation; set true when a Knock back to this missed knock is sent
   answeredAt: Timestamp | null
   handoff: { forFrom: Link[], forTo: Link[] } | null   // set by open(); Link = {way, url}
   handoffTappedAt: Timestamp | null  // first hand-off tap; drives the 5-min fallback + usefulness metric
@@ -368,7 +372,7 @@ pushOutbox/{id}                      // emulator/test only: what would have been
   **Clients write nothing directly** except their own push tokens. Everything else goes through callable functions.
 - **Callable functions:** `createAccount(name, timeZone)`, `requestNeighbour(code)`, `answerNeighbourRequest(id, accept)`,
   `createInviteCode()` (the 6-character fallback), `resetInvite()`,
-  `removeNeighbour(uid)`, `knock(to, wayIn, windowMin, tag?)`, `cancelKnock(id)`, `open(id)`,
+  `removeNeighbour(uid)`, `knock(to, wayIn, windowMin, tag?, knockBackOf?)`, `cancelKnock(id)`, `open(id)`,
   `notNow(id, laterToday)`, `markHandoffTapped(id)`, `setDoor(state, until?)`, `updateProfile(name?, ways?, phone?, facetime?)`.
 - **Neighbour requests** *(builder's call)*: `requestNeighbour(code)` looks up a link code or a short code and creates
   a `pending` `neighbourRequests` doc for its owner (with the requester's `fromName`) and the matching `sentRequests` doc for the requester (with `from`, `to` and the owner's `toName`). It is rate-limited per caller (for example 10 attempts per hour) and replies
