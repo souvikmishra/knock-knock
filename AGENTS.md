@@ -4,8 +4,10 @@
 ```sh
 npm run dev     # Firebase emulators (Auth 9099, Firestore 8080, Functions 5001, UI 4000; project demo-knock-knock)
                 #   + next dev on :3000 pointed at them. Builds functions first; needs Java 21.
-npm test        # Vitest (unit, Firestore rules, web) under the Auth + Firestore emulators
-npm run check   # tsc --noEmit + ESLint, for web/ and functions/
+npm test        # Vitest under the Auth + Firestore emulators: unit, Firestore rules and web config tests.
+                #   The functions emulator isn't started yet (step 2 extends this).
+npm run check   # tsc --noEmit + ESLint for root tests/configs (tests/, e2e/, *.config.ts), web/ and functions/
+                #   (web runs `next typegen` first so it works in a fresh checkout)
 npm run smoke   # builds functions, then Playwright (WebKit iPhone 15 + Chromium) under the emulators:
                 #   loads the home page, which signs in anonymously and shows "connected".
                 #   Step 2 extends it to the real knock -> open -> tel: flow.
@@ -43,6 +45,7 @@ scripts/             helper scripts (require-java.mjs)
 tests/rules/         Firestore security rules tests
 e2e/                 Playwright smoke test
 vitest.config.ts  playwright.config.ts  firebase.json  .firebaserc  firestore.rules
+tsconfig.json  eslint.config.mjs   root type-check/lint for tests/, e2e/ and the root configs (web/ and functions/ have their own)
 package.json         root scripts: dev, test, check, smoke
 ```
 `apphosting.yaml` (step 5) and `firestore.indexes.json` do not exist yet.
@@ -55,12 +58,17 @@ Steps 1–4 need no real Firebase project. Java 21 is keg-only: it's on PATH via
 non-interactive shells (agents, scripts) need `export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"`.
 
 1. **Scaffold and the four commands. (Done.)** `create-next-app` into `web/` (TypeScript, App Router, ESLint),
-   `firebase init` (Firestore, Functions in TS, Emulators, App Hosting), `shadcn init` in `web/`, port
+   `firebase init` (Firestore, Functions in TS, Emulators; App Hosting was deferred to step 5), `shadcn init` in `web/`, port
    friendlyeats' `lib/firebase` setup to TS. Add Vitest and Playwright. `dev`, `test`, `check` and `smoke` all pass on an empty app (smoke can
    just load the home page at this point). Commit.
 2. **Smallest knock → open, end to end.** Two emulator users made neighbours by a seed script; `knock()` and
    `open()` callables with the rules in transactions; Doors screen, knock sheet, full-screen door, Door's open
    screen, live via `onSnapshot`. No push. Turn the smoke test into the real knock → open → `tel:` check.
+   Carry-overs from the step 1 review:
+   - `npm run dev` should also watch-build functions (today it builds once in `predev`).
+   - `npm test` needs the functions emulator and a functions build, and `fileParallelism: false` for the rules
+     project once rules tests clear shared emulator state.
+   - `firebase-status` can show "connected" from a cached anonymous user (fresh Playwright contexts are unaffected).
 3. **Invites and names.** `/k/[code]`, `acceptInvite`, name step, the Safari → Home Screen cookie hand-over
    and the short-code fallback. The smoke test starts from an invite link.
 4. **Push, locally.** Service worker, token registration, push sender writing to `pushOutbox` in emulator mode:
