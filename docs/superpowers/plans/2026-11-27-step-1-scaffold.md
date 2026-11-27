@@ -1,6 +1,6 @@
 # Step 1: Scaffold and the four commands, implementation plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** An empty Knock Knock app where `npm run dev`, `npm test`, `npm run check` and `npm run smoke` all run
 and pass, so every later feature lands on a working feedback loop.
@@ -59,11 +59,11 @@ firebase-functions 7 / firebase-admin 14, firebase-tools 15 (as a devDependency)
 **Interfaces:**
 - Produces: root script `check` = `npm run check --workspaces --if-present`; `web` script `check` = `tsc --noEmit && eslint .`
 
-- [ ] **Step 1:** Scaffold `web/` and run `npx shadcn@latest init` inside it.
-- [ ] **Step 2:** Add the root `package.json` and the `check` scripts. Run `npm install` at the root.
-- [ ] **Step 3:** Run `npm run check`. Expected: exit 0, no type or lint errors.
-- [ ] **Step 4:** Run `npm run build -w web`. Expected: "Compiled successfully" and the `/` route listed.
-- [ ] **Step 5:** Commit: `Scaffold Next.js app in web/ with Tailwind and shadcn/ui`.
+- [x] **Step 1:** Scaffold `web/` and run `npx shadcn@latest init` inside it.
+- [x] **Step 2:** Add the root `package.json` and the `check` scripts. Run `npm install` at the root.
+- [x] **Step 3:** Run `npm run check`. Expected: exit 0, no type or lint errors.
+- [x] **Step 4:** Run `npm run build -w web`. Expected: "Compiled successfully" and the `/` route listed.
+- [x] **Step 5:** Commit: `Scaffold Next.js app in web/ with Tailwind and shadcn/ui`.
 
 ### Task 2: Firebase config, functions, rules and `npm test`
 
@@ -89,17 +89,17 @@ firebase-functions 7 / firebase-admin 14, firebase-tools 15 (as a devDependency)
   - `pretest` = `node scripts/require-java.mjs`
   - `test` = `firebase emulators:exec --project demo-knock-knock --only auth,firestore "vitest run"`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
   - `windows.test.ts`: `KNOCK_WINDOWS` equals `[5, 15, 60]`; `DEFAULT_KNOCK_WINDOW` is `15`; `isKnockWindow(15)` true; `isKnockWindow(10)`, `isKnockWindow("15")`, `isKnockWindow(undefined)` false.
   - `require-java.test.mjs`: `javaMajor('openjdk version "21.0.5" 2024-10-15')` → `21`; `javaMajor('java version "1.8.0_391"')` → `8`; `javaMajor('The operation couldn’t be completed. Unable to locate a Java Runtime.')` → `null`.
   - `deny-all.test.ts` (uses `initializeTestEnvironment({ projectId: "demo-knock-knock", firestore: { rules: <contents of firestore.rules> } })`): `assertFails` for an unauthenticated read of `users/a`, an unauthenticated write to `users/a`, **and** a write to `users/alice` by authenticated `alice`.
-- [ ] **Step 2:** Run `npx vitest run --project unit`. Expected: FAIL, modules not found.
-- [ ] **Step 3:** Implement `windows.ts` and `require-java.mjs` with the interfaces above.
-- [ ] **Step 4:** Run `npx vitest run --project unit`. Expected: PASS (6+ assertions).
-- [ ] **Step 5:** With Java absent, run `npm test`. Expected: exits 1 printing exactly "Java 21+ is required for the Firebase emulators: brew install openjdk@21". (Skip if Java is already installed and note it.)
-- [ ] **Step 6:** With Java 21 installed, run `npm test`. Expected: emulators start, both projects pass, emulators shut down, exit 0.
-- [ ] **Step 7:** Add `functions` to `npm run check` (root `check` already fans out). Run it. Expected: exit 0.
-- [ ] **Step 8:** Commit: `Add Firebase emulator config, deny-all rules, functions workspace and npm test`.
+- [x] **Step 2:** Run `npx vitest run --project unit`. Expected: FAIL, modules not found.
+- [x] **Step 3:** Implement `windows.ts` and `require-java.mjs` with the interfaces above.
+- [x] **Step 4:** Run `npx vitest run --project unit`. Expected: PASS (6+ assertions).
+- [x] **Step 5:** With Java absent, run `npm test`. Expected: exits 1 printing exactly "Java 21+ is required for the Firebase emulators: brew install openjdk@21". (Skip if Java is already installed and note it.)
+- [x] **Step 6:** With Java 21 installed, run `npm test`. Expected: emulators start, both projects pass, emulators shut down, exit 0.
+- [x] **Step 7:** Add `functions` to `npm run check` (root `check` already fans out). Run it. Expected: exit 0.
+- [x] **Step 8:** Commit: `Add Firebase emulator config, deny-all rules, functions workspace and npm test`.
 
 ### Task 3: Firebase in the web app and `npm run smoke`
 
@@ -124,16 +124,16 @@ firebase-functions 7 / firebase-admin 14, firebase-tools 15 (as a devDependency)
   - `presmoke` = `node scripts/require-java.mjs && npx playwright install webkit chromium`
   - `smoke` = `firebase emulators:exec --project demo-knock-knock --only auth,firestore,functions "playwright test"`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
   - `config.test.ts`: with `{}`, `getFirebaseConfig` returns projectId `demo-knock-knock` and `shouldUseEmulators` is `true`; with `NEXT_PUBLIC_FIREBASE_CONFIG` = `{"projectId":"knock-prod","apiKey":"k","appId":"a"}` it returns projectId `knock-prod` and `shouldUseEmulators` is `false`; with that config **and** `NEXT_PUBLIC_FIREBASE_EMULATORS=1`, `shouldUseEmulators` is `true`.
   - `e2e/smoke.spec.ts`, test "home page connects to Firebase emulators": `page.goto("/")`; expect heading "Knock Knock" visible; expect `getByTestId("firebase-status")` to have text `connected` within 15 s.
-- [ ] **Step 2:** Run `npx vitest run --project web`. Expected: FAIL, module not found.
-- [ ] **Step 3:** Implement `config.ts`, `client.ts`, `firebase-status.tsx`; wire into `page.tsx`.
-- [ ] **Step 4:** Run `npx vitest run --project web`. Expected: PASS.
-- [ ] **Step 5:** Write `playwright.config.ts`: `testDir: "e2e"`; projects `webkit-iphone` (`devices["iPhone 15"]`) and `chromium` (`devices["Desktop Chrome"]`); `webServer` = `npm run dev -w web`, url `http://localhost:3000`, `reuseExistingServer: !process.env.CI`, env `NEXT_PUBLIC_FIREBASE_EMULATORS=1`, timeout 120 s.
-- [ ] **Step 6:** Run `npm run smoke`. Expected: 2 passed (`webkit-iphone`, `chromium`), exit 0.
-- [ ] **Step 7:** Run `npm test` and `npm run check`. Expected: both exit 0.
-- [ ] **Step 8:** Commit: `Wire Firebase client to emulators and add Playwright smoke test`.
+- [x] **Step 2:** Run `npx vitest run --project web`. Expected: FAIL, module not found.
+- [x] **Step 3:** Implement `config.ts`, `client.ts`, `firebase-status.tsx`; wire into `page.tsx`.
+- [x] **Step 4:** Run `npx vitest run --project web`. Expected: PASS.
+- [x] **Step 5:** Write `playwright.config.ts`: `testDir: "e2e"`; projects `webkit-iphone` (`devices["iPhone 15"]`) and `chromium` (`devices["Desktop Chrome"]`); `webServer` = `npm run dev -w web`, url `http://localhost:3000`, `reuseExistingServer: !process.env.CI`, env `NEXT_PUBLIC_FIREBASE_EMULATORS=1`, timeout 120 s.
+- [x] **Step 6:** Run `npm run smoke`. Expected: 2 passed (`webkit-iphone`, `chromium`), exit 0.
+- [x] **Step 7:** Run `npm test` and `npm run check`. Expected: both exit 0.
+- [x] **Step 8:** Commit: `Wire Firebase client to emulators and add Playwright smoke test`.
 
 ### Task 4: `npm run dev` and AGENTS.md
 
@@ -147,8 +147,8 @@ firebase-functions 7 / firebase-admin 14, firebase-tools 15 (as a devDependency)
   - `predev` = `node scripts/require-java.mjs && npm run build -w functions`
   - `dev` = `concurrently -k -n emu,web "firebase emulators:start --project demo-knock-knock" "NEXT_PUBLIC_FIREBASE_EMULATORS=1 npm run dev -w web"`
 
-- [ ] **Step 1:** Add the scripts. Start `npm run dev` in the background.
-- [ ] **Step 2:** Verify: `curl -s localhost:3000 | grep -o "Knock Knock" | head -1` prints `Knock Knock`, and `curl -s localhost:4000` (Emulator UI) returns HTML. Stop the process.
-- [ ] **Step 3:** Update `AGENTS.md` as listed.
-- [ ] **Step 4:** Final check: `npm run check && npm test && npm run smoke`. Expected: all exit 0. Paste the summary lines into the hand-off message.
-- [ ] **Step 5:** Commit: `Add npm run dev and mark the feedback loop live in AGENTS.md`.
+- [x] **Step 1:** Add the scripts. Start `npm run dev` in the background.
+- [x] **Step 2:** Verify: `curl -s localhost:3000 | grep -o "Knock Knock" | head -1` prints `Knock Knock`, and `curl -s localhost:4000` (Emulator UI) returns HTML. Stop the process.
+- [x] **Step 3:** Update `AGENTS.md` as listed.
+- [x] **Step 4:** Final check: `npm run check && npm test && npm run smoke`. Expected: all exit 0. Paste the summary lines into the hand-off message.
+- [x] **Step 5:** Commit: `Add npm run dev and mark the feedback loop live in AGENTS.md`.
