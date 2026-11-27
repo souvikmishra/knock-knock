@@ -14,7 +14,7 @@ missed-call problem the product exists to fix.
 | Outcome | What the knocker gets |
 |---------|-----------------------|
 | **Opened** | A **high-urgency push** with the normal notification sound: "🚪 Riya opened · 📞 call now". Tapping it opens the Door's open screen with the big hand-off button. (iPhone web notifications can't carry a Call button, see [0007](0007-platform.md).) |
-| **Not now** | A **silent** push (shown, no sound): "Riya: not now · maybe later today". |
+| **Not now** | A **silent** push (shown, no sound): "Riya: not now", plus " · maybe later today" only if Riya chose that optional extra. |
 | **Not in** (window ended) | **Nothing.** The knocker sees "Riya's not in. That's fine." the next time they open the app. |
 | **Taken back** by the knocker | The recipient's knock notification is silently replaced by "Arjun's knock has passed" *(builder's call: iPhone requires every push to show something, so we can't just delete it)*. |
 

@@ -35,7 +35,7 @@ What iPhone web apps can and can't do (Nov 2026):
      "Arjun wants to be neighbours → Accept".
   4. Name → **[Allow notifications]** button (needs a tap) → done.
   The account is created **inside the Home Screen app**, never in the Safari tab. If the cookie didn't carry over,
-  the fallback is "tap the invite link again" or a short code.
+  the fallback is "tap the invite link again" (if the app isn't installed yet) or a short code. For an already installed app, Safari can't hand the link over, so the person types the short code.
 - The app calls `navigator.storage.persist()` on every start until it's granted, so iOS doesn't evict the
   account.
 - Pushes are sent with high urgency.

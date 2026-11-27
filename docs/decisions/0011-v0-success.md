@@ -13,7 +13,7 @@ We need a test small enough to watch closely and fix fast, but real enough to sh
 
 | Signal | Target | How we measure |
 |--------|--------|----------------|
-| Delivery | A knock reaches a locked phone within **30 s** in **≥ 9 of 10** knocks | Server logs push-sent time; the service worker records push-received time against the knock |
+| Delivery | A knock reaches a locked phone within **30 s** in **≥ 9 of 10** knocks | Time from the knock's `createdAt` to push-received time (the service worker records it against the knock); server logs push-sent time separately for diagnostics |
 | Habit | Each person knocks **≥ 3×/week** without being nudged | Knock counts per person per week |
 | Usefulness | **Most** opened knocks turn into a real call or chat | Hand-off button taps after opens, plus asking testers |
 | Feel | **Nobody** says it feels rude or naggy | A short chat with each tester at the end |
