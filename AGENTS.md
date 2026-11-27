@@ -3,7 +3,7 @@
 ## Commands
 ```sh
 npm run dev     # Firebase emulators (Auth 9099, Firestore 8080, Functions 5001, UI 4000; project demo-knock-knock)
-                #   + next dev on :3000 pointed at them. Builds functions first; needs Java 21.
+                #   + next dev on :3000 (smoke uses :3100) pointed at them. Builds functions first; needs Java 21.
 npm test        # Vitest under the Auth + Firestore emulators: unit, Firestore rules and web config tests.
                 #   The functions emulator isn't started yet (step 2 extends this).
 npm run check   # tsc --noEmit + ESLint for root tests/configs (tests/, e2e/, *.config.ts), web/ and functions/
