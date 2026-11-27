@@ -3,7 +3,7 @@
 > Don't text "hi". Knock.
 
 - **Status:** Agreed, 2026-11-27
-- **Decisions:** [docs/decisions/](decisions/) (0001–0015). This spec summarizes them. If they ever disagree, the
+- **Decisions:** [docs/decisions/](decisions/) (0001–0016). This spec summarizes them. If they ever disagree, the
   decision file wins until this spec is updated.
 
 Items marked *(builder's call)* were filled in while writing this spec, not discussed with the founder. They're
@@ -372,3 +372,14 @@ The founder + ~8 friends, all on iPhone, use it for **2 weeks**. v0 works if:
 - The founder creates the Firebase project (Blaze, budget alert), the GitHub repo and the App Hosting backend.
 - The coding agent asks before the first deploy and before any push to a deploying branch.
 - Invite links use the App Hosting default domain; "knock.app" in these docs is a placeholder.
+
+## 10. Look, motion and sound ([0016](decisions/0016-look-motion-and-sound.md))
+- **Sources:** Inspora for mood; Arc UI and Pin UI components through shadcn/ui; Linejig or the `anatomy` skill
+  for illustrations; sensory-ui for UI sound cues; Bencho's Knock/Rap for the knock sound if its licence allows.
+- **The hero:** the full-screen door (Screen 2) and the door opening into Screen 3. That's where motion and sound
+  go. Everything else stays quiet and fast.
+- **Rules:** motion reviewed with the `web-animation-design` skill; nothing delays the hand-off; no error sounds or
+  red for "not now"/"not in"; no presence-style indicators; sounds can be switched off; respect reduced motion.
+- **iPhone limits:** in-app sound only after a tap in the session and follows the silent switch; no web haptics;
+  pointer-reactive figures must work with touch.
+- **Open:** palette, type, light or dark. Decided with mockups while building the screens.

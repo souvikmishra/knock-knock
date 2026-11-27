@@ -16,13 +16,15 @@ Product idea: instead of texting "hi" and waiting, you **knock**. If they open, 
 don't, they're not around. See `README.md` for the pitch.
 
 ## Stage: spec done, stack chosen, ready to scaffold
-- The v0 spec is in `docs/spec-v0.md`. Every decision behind it is in `docs/decisions/` (0001–0015). Read
+- The v0 spec is in `docs/spec-v0.md`. Every decision behind it is in `docs/decisions/` (0001–0016). Read
   both before building. If code and spec disagree, raise it; don't silently pick one.
 - New product decisions get a new `docs/decisions/NNNN-title.md` (context, decision, alternatives, principle check).
 
 ## Stack ([0012](docs/decisions/0012-stack.md))
 - **Next.js** (App Router, TypeScript) as an installable web app, tested **iPhone-first**
   ([0007](docs/decisions/0007-platform.md)). Hand-written service worker at `public/firebase-messaging-sw.js`.
+- **UI:** shadcn/ui + Tailwind CSS; components copied in from Arc UI, Pin UI and sensory-ui through the shadcn
+  CLI; Motion when a component needs it ([0016](docs/decisions/0016-look-motion-and-sound.md)).
 - **Firebase:** Anonymous Auth, Firestore (live via `onSnapshot`), callable Cloud Functions for **all** writes,
   task-queue functions for knock expiry, FCM web push, App Hosting.
 - **Tests:** Vitest, `@firebase/rules-unit-testing`, Playwright. Emulators for everything local.
@@ -43,8 +45,8 @@ package.json         root scripts: dev, test, check, smoke
 Prereqs: Node 22+, Java 21 (emulators), `firebase-tools`. Steps 1–4 need no real Firebase project.
 
 1. **Scaffold and the four commands.** `create-next-app` into `web/` (TypeScript, App Router, ESLint),
-   `firebase init` (Firestore, Functions in TS, Emulators, App Hosting), port friendlyeats' `lib/firebase` setup
-   to TS. Add Vitest and Playwright. `dev`, `test`, `check` and `smoke` all pass on an empty app (smoke can
+   `firebase init` (Firestore, Functions in TS, Emulators, App Hosting), `shadcn init` in `web/`, port
+   friendlyeats' `lib/firebase` setup to TS. Add Vitest and Playwright. `dev`, `test`, `check` and `smoke` all pass on an empty app (smoke can
    just load the home page at this point). Commit.
 2. **Smallest knock → open, end to end.** Two emulator users made neighbours by a seed script; `knock()` and
    `open()` callables with the rules in transactions; Doors screen, knock sheet, full-screen door, Door's open
@@ -62,6 +64,19 @@ Prereqs: Node 22+, Java 21 (emulators), `firebase-tools`. Steps 1–4 need no re
    remove neighbour).
 8. **Ready for the test.** Delivery-metric logging, `handoffTappedAt`, onboarding polish, the full spec §8
    checklist on real iPhones, the tester data notice ([0014](docs/decisions/0014-data-kept-during-test.md)).
+
+## Design, motion and sound ([0016](docs/decisions/0016-look-motion-and-sound.md))
+- **Mood:** [Inspora](https://www.inspora.design/) for direction only. Never copy a specific creator's work.
+- **Components:** [Arc UI](https://uiarc.dev/), [Pin UI](https://www.pinui.xyz/#components),
+  [Bencho](https://bencho.dev/), installed through the shadcn CLI and restyled to one theme.
+- **Illustrations:** [Linejig](https://linejig.com/) (engine MIT, 12 free figures) or the `anatomy` skill.
+- **Sounds:** [sensory-ui](https://www.sensory-ui.com/) for UI cues; [Bencho](https://bencho.dev/) sounds (Knock,
+  Rap) for the knock, once its licence is checked.
+- **Motion review:** use the `web-animation-design` skill (Emil Kowalski's animations.dev) for every piece of
+  motion before calling it done.
+- Motion never delays the hand-off. No error sounds or red for "not now"/"not in". Nothing that looks like online
+  presence. Sounds can be switched off. Respect `prefers-reduced-motion`.
+- Check the licence before adding any component, figure or sound. **Ask the founder before buying any Pro tier.**
 
 ## Product principles (check every decision against these)
 - **A knock is a moment, not a message.** No unread piles, no guilt. Knocks expire.

@@ -31,6 +31,7 @@ Research notes (Nov 2026):
 | Need | Choice |
 |------|--------|
 | Frontend | Next.js App Router, TypeScript; `app/manifest.ts` (standalone display, icons); service worker hand-written at `public/firebase-messaging-sw.js` |
+| UI kit | **shadcn/ui + Tailwind CSS**, with components copied in from Arc UI, Pin UI and sensory-ui through the shadcn CLI; **Motion** when a component needs it ([0016](0016-look-motion-and-sound.md)) |
 | Hosting | **Firebase App Hosting** (Firebase's recommended path for Next.js; one vendor). Deploys on push to a connected GitHub branch, so only with the founder's OK ([0015](0015-setup-and-deploys.md)) |
 | Accounts | Firebase **Anonymous Auth** + display name ([0010](0010-identity.md)), created inside the Home Screen app |
 | Database + live | **Firestore**; screens subscribe with `onSnapshot` |
