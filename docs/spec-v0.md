@@ -334,7 +334,8 @@ neighbourRequests/{id}               // owner-side record; one pending per pair;
   status: 'pending'|'accepted'|'declined'|'expired'   // the real status, never readable by `from`
 
 sentRequests/{id}                    // requester-side view, same id; written only by functions; readable only by `from`
-  to: uid
+  from: uid                          // the requester (the person who opened the link); the read rule matches on this
+  to: uid                            // the link's owner
   toName: string                     // snapshot of the link owner's name, for the "waiting for Tara…" row
   createdAt, expiresAt: Timestamp
   status: 'pending'|'accepted'       // never 'declined': a decline leaves it 'pending' until expiresAt, then it is deleted
@@ -370,7 +371,7 @@ pushOutbox/{id}                      // emulator/test only: what would have been
   `removeNeighbour(uid)`, `knock(to, wayIn, windowMin, tag?)`, `cancelKnock(id)`, `open(id)`,
   `notNow(id, laterToday)`, `markHandoffTapped(id)`, `setDoor(state, until?)`, `updateProfile(name?, ways?, phone?, facetime?)`.
 - **Neighbour requests** *(builder's call)*: `requestNeighbour(code)` looks up a link code or a short code and creates
-  a `pending` `neighbourRequests` doc for its owner (with the requester's `fromName`) and the matching `sentRequests` doc for the requester (with the owner's `toName`). It is rate-limited per caller (for example 10 attempts per hour) and replies
+  a `pending` `neighbourRequests` doc for its owner (with the requester's `fromName`) and the matching `sentRequests` doc for the requester (with `from`, `to` and the owner's `toName`). It is rate-limited per caller (for example 10 attempts per hour) and replies
   "link not valid" for anything unknown, used or expired. Only the request's `to` can call
   `answerNeighbourRequest`; accepting creates the `neighbours` doc and sets the `sentRequests` doc to `accepted` in the same transaction. A decline
   sets only the owner-side status to `declined` and sends nothing to the requester; their `sentRequests` doc stays
