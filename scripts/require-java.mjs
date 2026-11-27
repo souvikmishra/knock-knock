@@ -1,8 +1,10 @@
 import { spawnSync } from "node:child_process";
+import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 const MIN_JAVA = 21;
-const MESSAGE = `Java ${MIN_JAVA}+ is required for the Firebase emulators: brew install openjdk@${MIN_JAVA}`;
+const MESSAGE = `Java ${MIN_JAVA}+ is required for the Firebase emulators: brew install openjdk@${MIN_JAVA}
+If it's already installed: export PATH="/opt/homebrew/opt/openjdk@${MIN_JAVA}/bin:$PATH"`;
 
 /** Parses the major version out of `java -version` output, or null if there is none. */
 export function javaMajor(versionOutput) {
@@ -22,6 +24,6 @@ function main() {
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
   main();
 }

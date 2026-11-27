@@ -9,3 +9,5 @@ functions/lib/
 playwright-report/
 test-results/
 .firebase/
+.env
+functions/.secret.local
