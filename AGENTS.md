@@ -53,7 +53,7 @@ package.json         root scripts: dev, test, check, smoke
 clsx + tailwind-merge drop-in) and registry components import it. Intended; don't replace it with a hand-written helper.
 
 ## Getting started (feedback loop first, then features)
-Prereqs: Node 22+, Java 21 (emulators; `brew install openjdk@21`), `firebase-tools` (a root devDependency).
+Prereqs: Node 24.12+ (the Firebase client and test packages require it; the deployed Functions runtime stays on Node 22), Java 21 (emulators; `brew install openjdk@21`), `firebase-tools` (a root devDependency).
 Steps 1–4 need no real Firebase project. Java 21 is keg-only: it's on PATH via `~/.zshrc` for interactive shells;
 non-interactive shells (agents, scripts) need `export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"`.
 
