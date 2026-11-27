@@ -23,9 +23,13 @@ buttons, no vibration patterns and no custom sound**, and every push must show a
   "Arjun knocked · 4:10". When the knock is opened, declined or taken back, the service worker closes it if it can.
   Replacing by tag must be checked on a real iPhone. If it doesn't replace, the fallback is a silent notification
   that the app clears on next launch.
-- **Stale knock push:** the knock push carries `expiresAt`. If the service worker receives it at or after that time
-  (the expiry push may have arrived first), it still shows a notification, as required, but the expired one
-  ("Arjun knocked · 4:10", silent, same `tag`), never the live "is knocking" text.
+- **Stale knock push:** the knock push carries `expiresAt` and the knock id. Before showing the live text, the
+  service worker checks three things: the time is before `expiresAt` (the expiry push may have arrived first); no
+  closing push for this knock has already been seen (`opened`, `not_now`, `cancelled`, `expired`, remembered by
+  knock id); and, if online, one quick status read (short timeout) shows the knock is still `live`. If any check
+  fails, it still shows a notification, as required, but the closed one ("Arjun knocked · 4:10", silent, same `tag`),
+  never the live "is knocking" text with sound. If the status read can't complete in time, the first two checks
+  decide. So a delayed push can't bring back a knock that was already answered, taken back or expired.
 
 **When the app is open:** a full-screen door with a real **knock-knock sound** and Open / Not now.
 
