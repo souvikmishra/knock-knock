@@ -104,7 +104,7 @@ When either app is on screen, it also updates live (`onSnapshot`), so nobody wai
 - **10-minute cooldown** before knocking the same person again after their `not_now`, or after your knock to them
   `expired`.
 - **Knock back** is a normal knock and passes the same rules, except it skips the cooldown, since the cooldown
-  protects the recipient and here the recipient is the one reaching back *(builder's call)*.
+  protects the recipient and here the recipient is the one reaching back ([0005](decisions/0005-who-can-knock.md)).
 - Closing your door doesn't cancel knocks already live.
 - Several missed knocks from one person collapse into one faint line, the latest *(builder's call)*. The line
   disappears at the recipient's local midnight ([0003](decisions/0003-unanswered-knocks.md)).
