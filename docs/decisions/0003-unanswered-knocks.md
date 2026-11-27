@@ -19,6 +19,8 @@ This is also where the founder's missed-call pain lives (a callback 5 minutes af
     the recipient's local midnight.
   - That line has a **Knock back** button. A knock back is a **fresh knock** with its own way in and window,
     so the original knocker is free to ignore it. A late reply becomes a question, not an obligation.
+    Each missed knock allows one cooldown-free knock back; further knocks follow the normal cooldown
+    ([0005](0005-who-can-knock.md)).
 - Several missed knocks from the same person collapse into one line (the latest).
 
 ## Alternatives considered

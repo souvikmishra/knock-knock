@@ -46,11 +46,11 @@ Prereqs: Node 22+, Java 21 (emulators), `firebase-tools`. Steps 1–4 need no re
 
 1. **Scaffold and the four commands.** `create-next-app` into `web/` (TypeScript, App Router, ESLint),
    `firebase init` (Firestore, Functions in TS, Emulators; App Hosting waits for step 5, it needs a real project), `shadcn init` in `web/`, port
-   friendlyeats' `lib/firebase` setup to TS. Add Vitest and Playwright. `dev`, `test` and `check` pass on an empty app. `smoke` is written as the knock → open → `tel:` check from the
-   start and may fail until step 2 makes it pass. Commit.
+   friendlyeats' `lib/firebase` setup to TS. Add Vitest and Playwright. `dev`, `test`, `check` and `smoke` all pass on an empty app (smoke can
+   just load the home page at this point). Commit.
 2. **Smallest knock → open, end to end.** Two emulator users made neighbours by a seed script; `knock()` and
    `open()` callables with the rules in transactions; Doors screen, knock sheet, full-screen door, Door's open
-   screen, live via `onSnapshot`. No push. Make the smoke test pass.
+   screen, live via `onSnapshot`. No push. Turn the smoke test into the real knock → open → `tel:` check.
 3. **Invites and names.** `/k/[code]`, `acceptInvite`, name step, the Safari → Home Screen cookie hand-over
    and the short-code fallback. The smoke test starts from an invite link.
 4. **Push, locally.** Service worker, token registration, push sender writing to `pushOutbox` in emulator mode:
