@@ -160,7 +160,7 @@ iPhone web apps: no buttons, no vibration patterns, no custom sounds, and **ever
 - Tapping any notification opens the app on the matching screen.
 - When the recipient opens or declines **in the app**, the app closes the knock notification locally
   (`registration.getNotifications`), with no push needed.
-- With the app open, an incoming knock shows the full-screen door with a knock-knock sound instead.
+- With the app open, an incoming knock shows the full-screen door with a knock-knock sound instead. The service worker still shows a notification for that push during the push event (`silent: true`, same `tag`, as iPhone requires) and posts a message to the page. The page shows the door, then closes that notification via `getNotifications({tag})` *(builder's call, [0012](decisions/0012-stack.md))*.
 
 ## 4. The three core screens
 
@@ -319,6 +319,9 @@ users/{uid}/private/contact          // owner-only; read by functions
 
 users/{uid}/tokens/{token}           // one per device/browser
   updatedAt: Timestamp
+  endpoint?: string                  // web-push fallback only; origin must be https://web.push.apple.com,
+                                     // https://fcm.googleapis.com, https://updates.push.services.mozilla.com
+                                     // or https://*.notify.windows.com (builder's call, 0012)
 
 invites/{code}                       // one active personal link per user; reset = new code
   owner: uid                         // code: random, >= 128 bits (e.g. 22 base62 chars), never typed
@@ -369,7 +372,7 @@ pushOutbox/{id}                      // emulator/test only: what would have been
 - **Security rules:** clients can read their own `users` doc and its subcollections, neighbours' public `users`
   fields (name, door, doorUntil, ways), `neighbours` docs they're in, `neighbourRequests` where they're `to` (the owner side, with the real status), `sentRequests` where they're `from`
   (the requester's view, which never shows a decline), and `knocks` where they're `from` or `to`. The `invites` and `inviteCodes` collections are not client-readable.
-  **Clients write nothing directly** except their own push tokens. Everything else goes through callable functions.
+  **Clients write nothing directly** except their own push tokens, and the rule rejects any token whose `endpoint` is outside the push-service allowlist above. The push sender re-checks the allowlist before every request, deletes non-matching records, never follows redirects and uses a short timeout *(builder's call, [0012](decisions/0012-stack.md))*. Everything else goes through callable functions.
 - **Callable functions:** `createAccount(name, timeZone)`, `requestNeighbour(code)`, `answerNeighbourRequest(id, accept)`,
   `createInviteCode()` (the 6-character fallback), `resetInvite()`,
   `removeNeighbour(uid)`, `knock(to, wayIn, windowMin, tag?, knockBackOf?)`, `cancelKnock(id)`, `open(id)`,
