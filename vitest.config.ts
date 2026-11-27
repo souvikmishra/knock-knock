@@ -17,6 +17,13 @@ export default defineConfig({
           include: ["tests/rules/**/*.test.ts"],
         },
       },
+      {
+        test: {
+          name: "web",
+          environment: "node",
+          include: ["web/src/**/*.test.ts"],
+        },
+      },
     ],
   },
 });
