@@ -105,6 +105,8 @@ When either app is on screen, it also updates live (`onSnapshot`), so nobody wai
   `expired`.
 - **Knock back** is a normal knock and passes the same rules, except it skips the cooldown, since the cooldown
   protects the recipient and here the recipient is the one reaching back ([0005](decisions/0005-who-can-knock.md)).
+  Each missed knock allows **one** cooldown-free Knock back; any further knock to that person follows the normal
+  10-minute cooldown.
 - Closing your door doesn't cancel knocks already live.
 - Several missed knocks from one person collapse into one faint line, the latest *(builder's call)*. The line
   disappears at the recipient's local midnight ([0003](decisions/0003-unanswered-knocks.md)).
@@ -319,7 +321,8 @@ pushOutbox/{id}                      // emulator/test only: what would have been
 - **Callable functions:** `createAccount(name, timeZone)`, `acceptInvite(code)`, `resetInvite()`,
   `removeNeighbour(uid)`, `knock(to, wayIn, windowMin, tag?)`, `cancelKnock(id)`, `open(id)`,
   `notNow(id, laterToday)`, `markHandoffTapped(id)`, `setDoor(state, until?)`, `updateProfile(name?, ways?, phone?, facetime?)`.
-- **Scheduled work:** the `expireKnock` task runs at `expiresAt`. Door auto-reopen is a task at `doorUntil`.
+- **Scheduled work:** the `expireKnock` task runs at `expiresAt`. Door auto-reopen is a task at `doorUntil`. When it runs it rechecks the user's current `doorUntil` and does nothing
+  if it has changed or been cleared, so a closure that was extended or ended early is never broken by the earlier task.
 - **Delivery metric** *(builder's call)*: the knock push carries a single-use token. The service worker posts it to
   an HTTPS function on receipt (inside `event.waitUntil`), which sets `pushReceivedAt`.
 - **Retention** ([0014](decisions/0014-data-kept-during-test.md)): knock records, hand-off links included, are
@@ -364,7 +367,8 @@ The founder + ~8 friends, all on iPhone, use it for **2 weeks**. v0 works if:
 
 **Before the test starts**, each of these must pass on at least two real iPhones with the deployed app:
 1. Invite link in Safari → Add to Home Screen → the Home Screen app shows the invite and creates the account.
-2. A knock arrives with the screen locked; tapping it opens the full-screen door.
+2. A knock arrives with the screen locked; tapping it opens the full-screen door. A knock sent while the app is
+   visible also shows a notification, and a later locked-phone knock still arrives.
 3. Open → the knocker gets "Riya opened" with their phone locked.
 4. `tel:`, `facetime:`, `wa.me` and `signal.me` links work from the Home Screen app.
 5. On expiry the notification fades to "Arjun knocked · 4:10" (or the fallback works).

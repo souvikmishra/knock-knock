@@ -21,7 +21,8 @@ number can reach you.
   - **10-minute cooldown** before knocking the same person again after a miss or a Not now.
     - *Clarification (same day):* a **Knock back** (the recipient returning a missed knock, see
       [0003](0003-unanswered-knocks.md)) is exempt from the cooldown. The cooldown protects the recipient, and here the
-      recipient is the one reaching back.
+      recipient is the one reaching back. Each missed knock allows **one** cooldown-free Knock back; any further knock
+      to that person follows the normal 10-minute cooldown (founder decision, to close the loophole of repeated knock backs).
 - You can **remove a neighbour** at any time, silently. The other person isn't told; your door just stops
   appearing in their list.
 
