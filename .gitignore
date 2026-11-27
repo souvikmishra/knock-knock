@@ -1,3 +1,11 @@
 .superpowers/
 .DS_Store
 node_modules/
+.next/
+out/
+functions/lib/
+*.log
+.env*.local
+playwright-report/
+test-results/
+.firebase/
