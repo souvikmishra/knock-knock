@@ -42,7 +42,7 @@ Research notes (Nov 2026):
 
 **Starting point.** We don't start from a blank page:
 - Scaffold with the official generators: `create-next-app` (TypeScript, App Router, ESLint) and `firebase init`
-  (Firestore, Functions in TypeScript, Emulators, App Hosting).
+  (Firestore, Functions in TypeScript, Emulators; App Hosting is added at the first deploy, once the founder has created the Firebase project on Blaze).
 - Use Firebase's official Next.js sample, [firebase/friendlyeats-web](https://github.com/firebase/friendlyeats-web)
   `nextjs-end` (from the [Integrate Firebase with a Next.js app](https://firebase.google.com/codelabs/firebase-nextjs)
   codelab), as the **reference for the Firebase wiring**: client/server Firebase app setup, emulator config,

@@ -89,8 +89,9 @@ When either app is on screen, it also updates live (`onSnapshot`), so nobody wai
           └────────────────────────────────► │ cancelled │  recipient's notification quietly replaced
                                              └───────────┘
 ```
-- All end states are final. The first transition wins: a transaction checks `status == live` and
-  `now < expiresAt`. An `open()` after `expiresAt` fails with "This knock has passed. Knock back?"
+- All end states are final. The first transition wins: a transaction checks `status == live`. User actions
+  (`open`, `notNow`, `cancelKnock`) also require `now < expiresAt`; the `expireKnock` task is the one transition
+  allowed at `now >= expiresAt`. An `open()` after `expiresAt` fails with "This knock has passed. Knock back?"
 - **Take it back** (`cancelled`) *(builder's call)*: no cooldown, no faint line for the recipient.
 - **Open but nobody acts** ([0013](decisions/0013-knocker-notifications.md)): if neither person taps a hand-off
   button within 5 minutes, both screens change to "Door's open · reach out when you can". The knock stays
@@ -103,7 +104,7 @@ When either app is on screen, it also updates live (`onSnapshot`), so nobody wai
 - **10-minute cooldown** before knocking the same person again after their `not_now`, or after your knock to them
   `expired`.
 - **Knock back** is a normal knock and passes the same rules, except it skips the cooldown, since the cooldown
-  protects the recipient and here the recipient is the one reaching back *(builder's call)*.
+  protects the recipient and here the recipient is the one reaching back ([0005](decisions/0005-who-can-knock.md)).
 - Closing your door doesn't cancel knocks already live.
 - Several missed knocks from one person collapse into one faint line, the latest *(builder's call)*. The line
   disappears at the recipient's local midnight ([0003](decisions/0003-unanswered-knocks.md)).
@@ -121,6 +122,8 @@ When either app is on screen, it also updates live (`onSnapshot`), so nobody wai
 - For call and FaceTime, the **knocker dials**, so both phones don't call each other at once *(builder's call)*.
   The recipient's fallback button appears only if the knocker has the matching contact saved.
 - The knock sheet only offers ways in the recipient accepts and has the contact for.
+- For WhatsApp and Signal the recipient's button appears only if the knocker has added that contact (same rule as
+  the call fallback above); otherwise the recipient sees just "Arjun is messaging you on WhatsApp", with no button.
 - Other ways the other person accepts appear as small alternates.
 
 ### 3.5 Notifications ([0008](decisions/0008-knock-feel.md), [0013](decisions/0013-knocker-notifications.md))
@@ -132,7 +135,7 @@ iPhone web apps: no buttons, no vibration patterns, no custom sounds, and **ever
 | Expired | recipient | replaces it: "Arjun knocked · 4:10" (same tag) | silent |
 | Cancelled | recipient | replaces it: "Arjun's knock has passed" (same tag) | silent |
 | Opened | knocker | "🚪 Riya opened · 📞 call now" | default, high urgency |
-| Not now | knocker | "Riya: not now · maybe later today" | silent |
+| Not now | knocker | "Riya: not now" (+ " · maybe later today" only if she chose it) | silent |
 | Not in | knocker | none (shown in app) | — |
 
 - Tapping any notification opens the app on the matching screen.
@@ -353,7 +356,7 @@ The founder + ~8 friends, all on iPhone, use it for **2 weeks**. v0 works if:
 
 | Signal | Target | Measured by |
 |--------|--------|-------------|
-| Delivery | ≤ 30 s to a locked phone in ≥ 9/10 knocks | `pushReceivedAt − pushSentAt` per knock |
+| Delivery | ≤ 30 s to a locked phone in ≥ 9/10 knocks | `pushReceivedAt − createdAt` per knock (`pushSentAt` is kept for server-side diagnostics) |
 | Habit | each person knocks ≥ 3×/week unprompted | knock counts per person per week |
 | Usefulness | most opens lead to a real call/chat | `handoffTappedAt` on opened knocks, plus asking testers |
 | Feel | nobody finds it rude or naggy | a short chat with each tester at the end |

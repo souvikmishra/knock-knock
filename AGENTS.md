@@ -58,7 +58,7 @@ Steps 1–4 need no real Firebase project. Java 21 is keg-only: it's on PATH via
 non-interactive shells (agents, scripts) need `export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"`.
 
 1. **Scaffold and the four commands. (Done.)** `create-next-app` into `web/` (TypeScript, App Router, ESLint),
-   `firebase init` (Firestore, Functions in TS, Emulators; App Hosting was deferred to step 5), `shadcn init` in `web/`, port
+   `firebase init` (Firestore, Functions in TS, Emulators; App Hosting waits for step 5, it needs a real project), `shadcn init` in `web/`, port
    friendlyeats' `lib/firebase` setup to TS. Add Vitest and Playwright. `dev`, `test`, `check` and `smoke` all pass on an empty app (smoke can
    just load the home page at this point). Commit.
 2. **Smallest knock → open, end to end.** Two emulator users made neighbours by a seed script; `knock()` and
@@ -74,7 +74,7 @@ non-interactive shells (agents, scripts) need `export PATH="/opt/homebrew/opt/op
 4. **Push, locally.** Service worker, token registration, push sender writing to `pushOutbox` in emulator mode:
    knock push to the recipient, "opened" push to the knocker. Tests assert the outbox.
 5. **First deploy and a real iPhone.** **Ask the founder first** ([0015](docs/decisions/0015-setup-and-deploys.md));
-   they create the project and repo. Check the pre-test list in spec §8 items 1–4 on real iPhones. If delivery
+   they create the project and repo. Then add App Hosting (`firebase init apphosting`, `apphosting.yaml`). Check the pre-test list in spec §8 items 1–4 on real iPhones. If delivery
    or the invite hand-over fails, stop and report before building further.
 6. **Expiry and the quiet outcomes.** Expiry task + fade push + faint line + knock back; Not now (+ later today);
    take it back; cooldown; the 5-minute "reach out when you can" fallback.

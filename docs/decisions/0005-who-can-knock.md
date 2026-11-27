@@ -19,6 +19,9 @@ number can reach you.
 - Limits:
   - **One live knock per pair** at a time.
   - **10-minute cooldown** before knocking the same person again after a miss or a Not now.
+    - *Clarification (same day):* a **Knock back** (the recipient returning a missed knock, see
+      [0003](0003-unanswered-knocks.md)) is exempt from the cooldown. The cooldown protects the recipient, and here the
+      recipient is the one reaching back.
 - You can **remove a neighbour** at any time, silently. The other person isn't told; your door just stops
   appearing in their list.
 

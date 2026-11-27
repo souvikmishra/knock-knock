@@ -1,6 +1,6 @@
 # 0008: How a knock feels: a distinct knock
 
-- **Status:** Accepted (revised the same day for iPhone limits, see [0007](0007-platform.md))
+- **Status:** Accepted (revised the same day for iPhone limits, see [0007](0007-platform.md); same-day clarification: stale knock push)
 - **Date:** 2026-11-27
 
 ## Context
@@ -23,6 +23,9 @@ buttons, no vibration patterns and no custom sound**, and every push must show a
   "Arjun knocked · 4:10". When the knock is opened, declined or taken back, the service worker closes it if it can.
   Replacing by tag must be checked on a real iPhone. If it doesn't replace, the fallback is a silent notification
   that the app clears on next launch.
+- **Stale knock push:** the knock push carries `expiresAt`. If the service worker receives it at or after that time
+  (the expiry push may have arrived first), it still shows a notification, as required, but the expired one
+  ("Arjun knocked · 4:10", silent, same `tag`), never the live "is knocking" text.
 
 **When the app is open:** a full-screen door with a real **knock-knock sound** and Open / Not now.
 
