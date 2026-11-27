@@ -326,11 +326,18 @@ inviteCodes/{shortCode}              // type-in fallback only; 6 chars, single-u
   createdAt, expiresAt: Timestamp    // expiresAt = createdAt + 10 min
   usedAt: Timestamp | null
 
-neighbourRequests/{id}               // one pending per pair
+neighbourRequests/{id}               // owner-side record; one pending per pair; readable only by `to`
   from: uid                          // the person who opened the link
   to: uid                            // the link's owner
+  fromName: string                   // snapshot of the requester's name, so the owner sees who is asking
   createdAt, expiresAt: Timestamp    // expiresAt = createdAt + 7 days
-  status: 'pending'|'accepted'|'declined'|'expired'
+  status: 'pending'|'accepted'|'declined'|'expired'   // the real status, never readable by `from`
+
+sentRequests/{id}                    // requester-side view, same id; written only by functions; readable only by `from`
+  to: uid
+  toName: string                     // snapshot of the link owner's name, for the "waiting for Tara…" row
+  createdAt, expiresAt: Timestamp
+  status: 'pending'|'accepted'       // never 'declined': a decline leaves it 'pending' until expiresAt, then it is deleted
 
 neighbours/{pairId}                  // pairId = sorted(uidA, uidB).join('_')
   members: [uidA, uidB]
@@ -355,20 +362,21 @@ pushOutbox/{id}                      // emulator/test only: what would have been
 - **Contact privacy:** a phone number or FaceTime handle never sits in a document another user can read until
   `open()` copies the needed hand-off links into that knock. Only the two parties can read a knock.
 - **Security rules:** clients can read their own `users` doc and its subcollections, neighbours' public `users`
-  fields (name, door, doorUntil, ways), `neighbours` docs they're in, `neighbourRequests` where they're `from` or `to`, and `knocks` where they're
-  `from` or `to`. The `invites` and `inviteCodes` collections are not client-readable.
+  fields (name, door, doorUntil, ways), `neighbours` docs they're in, `neighbourRequests` where they're `to` (the owner side, with the real status), `sentRequests` where they're `from`
+  (the requester's view, which never shows a decline), and `knocks` where they're `from` or `to`. The `invites` and `inviteCodes` collections are not client-readable.
   **Clients write nothing directly** except their own push tokens. Everything else goes through callable functions.
 - **Callable functions:** `createAccount(name, timeZone)`, `requestNeighbour(code)`, `answerNeighbourRequest(id, accept)`,
   `createInviteCode()` (the 6-character fallback), `resetInvite()`,
   `removeNeighbour(uid)`, `knock(to, wayIn, windowMin, tag?)`, `cancelKnock(id)`, `open(id)`,
   `notNow(id, laterToday)`, `markHandoffTapped(id)`, `setDoor(state, until?)`, `updateProfile(name?, ways?, phone?, facetime?)`.
 - **Neighbour requests** *(builder's call)*: `requestNeighbour(code)` looks up a link code or a short code and creates
-  a `pending` request to its owner. It is rate-limited per caller (for example 10 attempts per hour) and replies
+  a `pending` `neighbourRequests` doc for its owner (with the requester's `fromName`) and the matching `sentRequests` doc for the requester (with the owner's `toName`). It is rate-limited per caller (for example 10 attempts per hour) and replies
   "link not valid" for anything unknown, used or expired. Only the request's `to` can call
-  `answerNeighbourRequest`; accepting creates the `neighbours` doc in the same transaction. A decline sends nothing
-  to the requester. Expired requests are treated as gone even before cleanup runs.
+  `answerNeighbourRequest`; accepting creates the `neighbours` doc and sets the `sentRequests` doc to `accepted` in the same transaction. A decline
+  sets only the owner-side status to `declined` and sends nothing to the requester; their `sentRequests` doc stays
+  `pending` until `expiresAt`. Expired requests are treated as gone even before cleanup runs.
 - **Scheduled work:** the `expireKnock` task runs at `expiresAt`. A `expireNeighbourRequest` task runs at each
-  request's `expiresAt`. Door auto-reopen is a task at `doorUntil`. When it runs it rechecks the user's current `doorUntil` and does nothing
+  request's `expiresAt` and deletes both the owner-side and requester-side docs. Door auto-reopen is a task at `doorUntil`. When it runs it rechecks the user's current `doorUntil` and does nothing
   if it has changed or been cleared, so a closure that was extended or ended early is never broken by the earlier task.
 - **Delivery metric** *(builder's call)*: the knock push carries a single-use token. The service worker posts it to
   an HTTPS function on receipt (inside `event.waitUntil`), which sets `pushReceivedAt`.
