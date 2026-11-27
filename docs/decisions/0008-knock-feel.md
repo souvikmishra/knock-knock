@@ -31,7 +31,7 @@ buttons, no vibration patterns and no custom sound**, and every push must show a
   never the live "is knocking" text with sound. If the status read can't complete in time, the first two checks
   decide. So a delayed push can't bring back a knock that was already answered, taken back or expired.
 
-**When the app is open:** a full-screen door with a real **knock-knock sound** and Open / Not now.
+**When the app is open:** a full-screen door with a real **knock-knock sound** and Open / Not now. The service worker still shows the notification during the push event (`silent: true`, same `tag`) and the page closes it once the door is up, see [0012](0012-stack.md).
 
 **On Android** (works, not tested in v0): the same notification plus Open / Not now buttons and a knock-knock
 vibration pattern.
