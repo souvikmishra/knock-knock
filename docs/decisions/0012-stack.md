@@ -1,6 +1,6 @@
 # 0012: Stack: Next.js + Firebase
 
-- **Status:** Accepted
+- **Status:** Accepted (revised the same day for the iPhone-first test group, see [0007](0007-platform.md))
 - **Date:** 2026-11-27
 
 ## Context
@@ -11,30 +11,33 @@ setup instead of wiring everything from scratch.
 Every knock system needs:
 1. The web app plus a **service worker** that shows notifications while the app is closed.
 2. A **database**: people, neighbour pairs, invites, live knocks, push tokens.
-3. **Push delivery** through the browser's push service (for Chrome, that's Google's FCM).
-4. A **live channel**, so "Riya opened" shows up instantly.
+3. **Push delivery** through the browser's push service (Apple's for iPhone, Google's FCM for Chrome).
+4. A **live channel**, so "Riya opened" shows up instantly while the app is open.
 5. A **delayed job per knock**: at `expiresAt`, expire it and fade its notification.
 
 Research notes (Nov 2026):
 - Vercel's free plan runs scheduled jobs at most once a day (a beta allows every 15 minutes), so serverless
   Next.js alone can't do (5).
-- Pushes must use `Urgency: high`. The default "normal" can be held while Android sleeps.
 - Next.js 16 builds with Turbopack by default, so webpack-based PWA plugins don't apply. Next's official PWA
   guide uses a hand-written service worker.
+- iPhone web push: Home Screen apps only, **every push must show a notification** (pushes that show nothing
+  get the subscription revoked), no action buttons or vibration, and `localhost` doesn't work with Apple's push
+  service.
+- Pushes should be sent with `Urgency: high`; the default "normal" can be held while the phone sleeps.
 
 ## Decision
 **Next.js (App Router, TypeScript) + Firebase.**
 
 | Need | Choice |
 |------|--------|
-| Frontend | Next.js App Router, TypeScript; `app/manifest.ts`; service worker hand-written at `public/firebase-messaging-sw.js` |
-| Hosting | **Firebase App Hosting** (Firebase's recommended path for Next.js; one vendor). Deploys on push to a connected GitHub branch, so only when the founder sets up a remote and asks |
-| Accounts | Firebase **Anonymous Auth** + display name ([0010](0010-identity.md)) |
+| Frontend | Next.js App Router, TypeScript; `app/manifest.ts` (standalone display, icons); service worker hand-written at `public/firebase-messaging-sw.js` |
+| Hosting | **Firebase App Hosting** (Firebase's recommended path for Next.js; one vendor). Deploys on push to a connected GitHub branch, so only with the founder's OK ([0015](0015-setup-and-deploys.md)) |
+| Accounts | Firebase **Anonymous Auth** + display name ([0010](0010-identity.md)), created inside the Home Screen app |
 | Database + live | **Firestore**; screens subscribe with `onSnapshot` |
-| Writes / rules | **All writes go through callable Cloud Functions** (`acceptInvite`, `knock`, `open`, `notNow`, `setDoor`, …). Firestore security rules allow clients to read only their own data and write nothing directly. Knock rules (one live knock per pair, cooldown, closed door) run in transactions in one place |
-| Push | **FCM**, **data-only** messages with `webpush.headers.Urgency: "high"`, so our service worker builds the notification (tag, actions, vibration, replace on expiry) |
-| Expiry | A **task-queue function** (`onTaskDispatched`), enqueued at knock time with `scheduleTime = expiresAt`. It flips `live → expired` and sends the silent fade push. The UI also counts down from `expiresAt`, so it never shows a stale knock even if the task is late |
-| Local dev & tests | **Firebase Emulator Suite** (Auth, Firestore, Functions). FCM can't be emulated, so in emulator mode the push sender writes to a `pushOutbox` collection that tests can read |
+| Writes / rules | **All writes go through callable Cloud Functions** (`acceptInvite`, `knock`, `open`, `notNow`, `setDoor`, …). Firestore security rules allow clients to read only what they're entitled to and write nothing directly except their own push tokens. Knock rules (one live knock per pair, cooldown, closed door) run in transactions in one place |
+| Push | **Firebase Cloud Messaging for web** (supports Safari on iOS 16.4+), sending **data messages** with `Urgency: high`. Our service worker builds **every** notification itself and always calls `showNotification` (iPhone requirement), using `tag` to replace and `silent` for quiet ones. *Builder's call:* if FCM misbehaves on real iPhones, switch the sender to the plain `web-push` library with VAPID keys; the service worker barely changes |
+| Expiry | A **task-queue function** (`onTaskDispatched`), enqueued at knock time with `scheduleTime = expiresAt`. It flips `live → expired` and sends the silent fade push. The UI also counts down from `expiresAt`, so it never shows a stale knock even if the task is late. Door auto-reopen uses the same mechanism |
+| Local dev & tests | **Firebase Emulator Suite** (Auth, Firestore, Functions) under project id `demo-knock-knock`, with no real project needed. Pushes can't be emulated, so in emulator mode the push sender writes to a `pushOutbox` collection that tests read. **Vitest** for unit and rules tests, **Playwright** (WebKit and Chromium) for the smoke test |
 
 **Starting point.** We don't start from a blank page:
 - Scaffold with the official generators: `create-next-app` (TypeScript, App Router, ESLint) and `firebase init`

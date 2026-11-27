@@ -1,34 +1,41 @@
 # 0008: How a knock feels: a distinct knock
 
-- **Status:** Accepted
+- **Status:** Accepted (revised the same day for iPhone limits, see [0007](0007-platform.md))
 - **Date:** 2026-11-27
 
 ## Context
 Open question: "Notification design: how does a knock *feel* (sound, haptic)?"
-Web app limits ([0007](0007-platform.md)): no custom notification sound and no full-screen ringing. On Android,
-web notifications can vibrate, show action buttons and replace themselves (same `tag`).
+The founder chose a "distinct knock" when we assumed Android. On iPhone web apps, notifications get **no action
+buttons, no vibration patterns and no custom sound**, and every push must show a notification.
 
 ## Decision
-**When the app is closed** (push notification):
+**When the app is closed** (push notification, iPhone):
 ```
 ┌ Knock Knock · now ───────────────┐
 │ 🚪 Arjun is knocking              │
 │ 📞 call? · quick q · 15 min left  │
-│  [ Open ]   [ Not now ]           │
 └───────────────────────────────────┘
+  default sound · tap → full-screen door
 ```
-- A short **knock-knock vibration** pattern (best effort; browsers may ignore it).
-- **Open** and **Not now** action buttons (Android; on iPhone tapping opens the app).
-- When the window ends, the notification is **silently replaced** (same tag) by "Arjun knocked · 4:10". When the
-  knock is opened or declined, it's removed.
+- The text does the work: 🚪, who's knocking, way in, tag and time left, with the default notification sound.
+- **Tapping opens the full-screen door** in the app, with **Open** and **Not now**.
+- When the window ends, the push is replaced by a **silent** notification with the same `tag`,
+  "Arjun knocked · 4:10". When the knock is opened, declined or taken back, the service worker closes it if it can.
+  Replacing by tag must be checked on a real iPhone. If it doesn't replace, the fallback is a silent notification
+  that the app clears on next launch.
 
-**When the app is open:** a full-screen door with a real knock sound and the same Open / Not now buttons.
+**When the app is open:** a full-screen door with a real **knock-knock sound** and Open / Not now.
+
+**On Android** (works, not tested in v0): the same notification plus Open / Not now buttons and a knock-knock
+vibration pattern.
 
 ## Alternatives considered
-- **Quiet knock** (a silent notification): the gentlest, but knocks would often be missed within their window.
-- **Tag sets loudness** ("need you" louder and sticky): more expressive, but everyone will tag everything
-  "need you", and it's more to tune.
+- **Quiet knock** (silent notification): the gentlest, but knocks would often be missed within their window.
+- **Tag sets loudness:** on iPhone web apps there's nothing to vary except sound on or off, and people would tag
+  everything "need you".
+- **Native app for a truly distinct knock** (custom sound, buttons, Time Sensitive): see the exit criterion in
+  [0007](0007-platform.md).
 
 ## Principle check
-- *A knock is a moment:* it feels like an arrival, and fades when the moment passes.
-- *Not answering is normal:* the replacement text is neutral, with no "missed" or red badge.
+- *A knock is a moment:* it arrives, and fades when the moment passes.
+- *Not answering is normal:* the fade text is neutral, with no "missed" and no red badge.

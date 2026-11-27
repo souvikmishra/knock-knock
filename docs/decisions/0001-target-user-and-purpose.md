@@ -21,7 +21,7 @@ In the founder's words:
 
 ## Decision
 - **Who:** people who already know each other (friends, family, close circles). Starting with the founder's
-  own circle in India, which is mostly Android.
+  own circle, which is all on iPhone ([0007](0007-platform.md)).
 - **What:** a **doorbell in front of every messenger**, not a new messenger. Knock Knock gets two people to
   "yes, now" and then hands them off to wherever they already talk.
 - **Constraint:** joining must take almost no effort, because onboarding is what keeps good apps like Signal
