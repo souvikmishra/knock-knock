@@ -21,16 +21,18 @@ Most conversations start with a "hi", a "hello", a "you there?", and then waitin
 - **Rooms**: knock on a group space (a team, friends, a house) and whoever's in answers.
 - **Knock back**: one tap to return a missed knock once you're free.
 
-## Open questions
-- After the door opens: chat, call, or both? Is the call the default?
-- What exactly happens to an unanswered knock? How long does it last?
-- Can you say *why* you're knocking, and does that make it a text message again?
-- Spam and abuse: who can knock on you? Rate limits?
-- Platform: mobile first, web, desktop menubar?
-- Notification design: how does a knock *feel* (sound, haptic)?
-- How is this different from presence/status in Slack, WhatsApp or Discord?
+## Open questions: decided
+All settled for v0 on 2026-11-27. See [`docs/spec-v0.md`](docs/spec-v0.md) and [`docs/decisions/`](docs/decisions/).
+- After the door opens → hand off to call, FaceTime, WhatsApp, Signal or meet ([0002](docs/decisions/0002-after-the-door-opens.md))
+- Unanswered knocks → the knocker picks a 5/15/60 min window, then a faint "knocked" line with Knock back ([0003](docs/decisions/0003-unanswered-knocks.md))
+- Why you're knocking → one optional preset tag, no free text ([0004](docs/decisions/0004-knock-reason.md))
+- Who can knock → mutual neighbours via invite link, with limits ([0005](docs/decisions/0005-who-can-knock.md))
+- Platform → installable web app, iPhone-first ([0007](docs/decisions/0007-platform.md))
+- How a knock feels → [0008](docs/decisions/0008-knock-feel.md)
+- Different from presence → [0009](docs/decisions/0009-different-from-presence.md)
 
 ## Next steps
-- [ ] Pick a platform for v0.
-- [ ] Sketch the 3 core screens: people/door list, incoming knock, the open conversation.
-- [ ] Decide what happens after the door opens.
+- [x] Pick a platform for v0.
+- [x] Sketch the 3 core screens: people/door list, incoming knock, the open conversation.
+- [x] Decide what happens after the door opens.
+- [ ] Scaffold the stack (see "Getting started" in `AGENTS.md`).
