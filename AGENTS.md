@@ -1,21 +1,25 @@
 # Knock Knock
 
 ## Commands
-> **Planned. None of these exist yet.** Step 1 of "Getting started" below creates them. Replace this note once
-> they run.
-
 ```sh
-npm run dev     # Firebase emulators (Auth, Firestore, Functions; project demo-knock-knock) + next dev
-npm test        # Vitest: knock rules, Firestore security rules, callable functions (against emulators)
-npm run check   # tsc --noEmit + ESLint, for web/ and functions/
-npm run smoke   # emulators + Playwright (WebKit + Chromium): B invites, A accepts, A knocks, B opens,
-                #   A sees "Riya opened" with a tel: link; asserts pushOutbox entries
+npm run dev     # Firebase emulators (Auth 9099, Firestore 8080, Functions 5001, UI 4000; project demo-knock-knock)
+                #   + next dev on :3000 (smoke uses :3100) pointed at them. Builds functions first; needs Java 21.
+npm test        # Vitest under the Auth + Firestore emulators: unit, Firestore rules and web config tests.
+                #   The functions emulator isn't started yet (step 2 extends this).
+npm run check   # tsc --noEmit + ESLint for root tests/configs (tests/, e2e/, *.config.ts), web/ and functions/
+                #   (web runs `next typegen` first so it works in a fresh checkout)
+npm run smoke   # builds functions, then Playwright (WebKit iPhone 15 + Chromium) under the emulators:
+                #   loads the home page, which signs in anonymously and shows "connected".
+                #   Step 2 extends it to the real knock -> open -> tel: flow.
 ```
+- Stop `npm run dev` before `npm run smoke` or `npm test`; emulator ports can't be shared.
+- The functions emulator warns that Node 22 doesn't match the host's Node 24. Expected locally; Cloud Functions
+  runs Node 22.
 
 Product idea: instead of texting "hi" and waiting, you **knock**. If they open, you're talking right away. If they
 don't, they're not around. See `README.md` for the pitch.
 
-## Stage: spec done, stack chosen, ready to scaffold
+## Stage: step 1 done (scaffold + feedback loop); next: step 2
 - The v0 spec is in `docs/spec-v0.md`. Every decision behind it is in `docs/decisions/` (0001–0016). Read
   both before building. If code and spec disagree, raise it; don't silently pick one.
 - New product decisions get a new `docs/decisions/NNNN-title.md` (context, decision, alternatives, principle check).
@@ -31,26 +35,40 @@ don't, they're not around. See `README.md` for the pitch.
 - **Reference for Firebase wiring:** [firebase/friendlyeats-web](https://github.com/firebase/friendlyeats-web)
   `nextjs-end`. Port its patterns to TypeScript; don't fork the app.
 
-## Layout (planned)
+## Layout
 ```
-web/                 Next.js app (app/, public/firebase-messaging-sw.js, lib/firebase/)
-functions/           Cloud Functions (TypeScript): callables, expiry task, push sender
-functions/src/rules/ pure knock rules (cooldown, one live knock, door, transitions), unit-tested
+web/                 Next.js app (src/app, src/lib/firebase/, src/components/); web/AGENTS.md has Next 16 agent
+                     notes: read it before writing Next-specific code
+functions/           Cloud Functions (TypeScript, builds to functions/lib/): callables, expiry task, push sender
+functions/src/rules/ pure knock rules (cooldown, one live knock, door, transitions), unit-tested (only the window helpers so far)
+scripts/             helper scripts (require-java.mjs)
+tests/rules/         Firestore security rules tests
 e2e/                 Playwright smoke test
-firebase.json  firestore.rules  firestore.indexes.json  apphosting.yaml
+vitest.config.ts  playwright.config.ts  firebase.json  .firebaserc  firestore.rules
+tsconfig.json  eslint.config.mjs   root type-check/lint for tests/, e2e/ and the root configs (web/ and functions/ have their own)
 package.json         root scripts: dev, test, check, smoke
 ```
+`apphosting.yaml` (step 5) and `firestore.indexes.json` do not exist yet.
+`web/src/lib/utils.ts` is `export { cn } from "cn"`: the shadcn 4.x generator's output (the `cn` package is a
+clsx + tailwind-merge drop-in) and registry components import it. Intended; don't replace it with a hand-written helper.
 
 ## Getting started (feedback loop first, then features)
-Prereqs: Node 22+, Java 21 (emulators), `firebase-tools`. Steps 1–4 need no real Firebase project.
+Prereqs: Node 24.12+ (the Firebase client and test packages require it; the deployed Functions runtime stays on Node 22), Java 21 (emulators; `brew install openjdk@21`), `firebase-tools` (a root devDependency).
+Steps 1–4 need no real Firebase project. Java 21 is keg-only: it's on PATH via `~/.zshrc` for interactive shells;
+non-interactive shells (agents, scripts) need `export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"`.
 
-1. **Scaffold and the four commands.** `create-next-app` into `web/` (TypeScript, App Router, ESLint),
+1. **Scaffold and the four commands. (Done.)** `create-next-app` into `web/` (TypeScript, App Router, ESLint),
    `firebase init` (Firestore, Functions in TS, Emulators; App Hosting waits for step 5, it needs a real project), `shadcn init` in `web/`, port
    friendlyeats' `lib/firebase` setup to TS. Add Vitest and Playwright. `dev`, `test`, `check` and `smoke` all pass on an empty app (smoke can
    just load the home page at this point). Commit.
 2. **Smallest knock → open, end to end.** Two emulator users made neighbours by a seed script; `knock()` and
    `open()` callables with the rules in transactions; Doors screen, knock sheet, full-screen door, Door's open
    screen, live via `onSnapshot`. No push. Turn the smoke test into the real knock → open → `tel:` check.
+   Carry-overs from the step 1 review:
+   - `npm run dev` should also watch-build functions (today it builds once in `predev`).
+   - `npm test` needs the functions emulator and a functions build, and `fileParallelism: false` for the rules
+     project once rules tests clear shared emulator state.
+   - `firebase-status` can show "connected" from a cached anonymous user (fresh Playwright contexts are unaffected).
 3. **Invites and names.** `/k/[code]`, `acceptInvite`, name step, the Safari → Home Screen cookie hand-over
    and the short-code fallback. The smoke test starts from an invite link.
 4. **Push, locally.** Service worker, token registration, push sender writing to `pushOutbox` in emulator mode:
